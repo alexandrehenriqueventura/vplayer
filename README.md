@@ -7,7 +7,7 @@ VPlayer é um player de áudio nativo moderno, rápido e elegante para macOS, de
 ## 📸 Capturas de Tela
 
 ### 1. Interface Principal & Fila de Reprodução
-Visual limpo com acabamento em *glassmorphism*, capa do álbum em destaque com animação acústica, barra de controle inferior e painel lateral de fila retrátil com busca em tempo real.
+Visual limpo com acabamento em *glassmorphism*, capa do álbum em destaque, barra de controle inferior e painel lateral de fila retrátil com busca em tempo real.
 
 ![Interface Principal & Fila](docs/screenshots/now-playing-queue.png)
 
@@ -60,6 +60,22 @@ Controle dinâmico sobre o processamento de som via AVAudioEngine: ajuste de vel
 
 ---
 
+## 💾 Download e Execução Direta
+
+Se você preferir executar o aplicativo sem compilar o código-fonte manualmente:
+
+1. **Aplicativo macOS completo (.app):**
+   - Descompacte [`dist/VPlayer-macOS.zip`](dist/VPlayer-macOS.zip) na pasta `dist/` do projeto (ou baixe na aba [Releases](https://github.com/alexandrehenriqueventura/vplayer/releases)).
+   - Abra o `VPlayer.app` diretamente ou arraste-o para `/Applications`.
+
+2. **Binário Executável Nativo:**
+   - O executável compilado está disponível diretamente na pasta [`bin/VPlayer`](bin/VPlayer):
+   ```bash
+   ./bin/VPlayer
+   ```
+
+---
+
 ## 📦 Como Compilar e Executar
 
 ### Compilação Rápida
@@ -101,6 +117,10 @@ O aplicativo empacotado estará disponível em `.build/VPlayer.app`.
 vplayer/
 ├── build.sh                 # Script de compilação, empacotamento e assinatura ad-hoc
 ├── Package.swift            # Manifesto Swift Package Manager
+├── bin/                     # Executável compilado nativo (Mach-O)
+│   └── VPlayer
+├── dist/                    # Pacote do aplicativo (.app) compactado para distribuição
+│   └── VPlayer-macOS.zip
 ├── docs/                    # Documentação e capturas de tela do aplicativo
 │   └── screenshots/
 ├── Resources/               # Ícones (.icns, .png) do aplicativo
