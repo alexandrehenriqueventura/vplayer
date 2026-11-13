@@ -7,7 +7,7 @@ struct NowPlayingView: View {
     var body: some View {
         HStack(alignment: .center, spacing: 24) {
             VStack(spacing: 14) {
-                ArtworkView(track: player.currentTrack, size: player.showConsole ? 240 : 320)
+                ArtworkView(track: player.currentTrack, size: player.showConsole ? 240 : 320, isPlaying: player.isPlaying)
 
                 VStack(spacing: 4) {
                     Text(player.currentTrack?.title ?? "Nada tocando")
