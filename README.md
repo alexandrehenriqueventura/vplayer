@@ -1,0 +1,115 @@
+# VPlayer — Reprodutor de Áudio Nativo para macOS
+
+VPlayer é um player de áudio nativo moderno, rápido e elegante para macOS, desenvolvido em **Swift** e **SwiftUI** utilizando **AVFoundation**.
+
+---
+
+## 🚀 Funcionalidades
+
+- **Gerenciamento de Fila & Playlist**:
+  - Exibir ou ocultar a fila/playlist com um clique (`sidebar.leading` ou ⌘L).
+  - Adição de arquivos e diretórios de áudio via File Picker ou Drag & Drop.
+  - Ordenação, remoção, busca/filtro em tempo real.
+  - Modos de reprodução: Normal, Repetir Uma, Repetir Todas e Shuffle (aleatório inteligente).
+- **Equalizador Gráfico de 10 Bandas**:
+  - Bandas de 31Hz a 16kHz com controles deslizantes interativos de -12dB a +12dB.
+  - Presets de fábrica integrados (Flat, Rock, Pop, Jazz, Clássica, Bass Boost, Vocal, Eletrônica).
+  - Suporte a presets customizados salvos pelo usuário.
+- **Efeitos de Áudio em Tempo Real**:
+  - Ajuste de Pitch (semitons) e Velocidade de Reprodução (0.5x a 2.0x).
+  - Reverb com múltiplos modos (Small Room, Medium Room, Large Room, Plate, Cathedral).
+  - Crossfade automático configurável entre faixas com interpolação suave de volume.
+- **Sincronização de Letras (Lyrics)**:
+  - Leitura automática de letras embutidas nas tags do arquivo ou arquivos `.lrc` externos correspondentes.
+  - Scroll automático acompanhando o timestamp exato do áudio.
+- **Integração com o macOS**:
+  - Controles de mídia nativos (`MPRemoteCommandCenter` e teclas de atalho de mídia do teclado).
+  - Integração com a Central de Notificações / Now Playing (`MPNowPlayingInfoCenter`) com capa do álbum em alta resolução.
+  - Suporte completo aos modos Claro e Escuro (Dark Mode).
+
+---
+
+## 🛠️ Requisitos de Sistema
+
+- macOS 14.0 (Sonoma) ou superior
+- Apple Silicon (arm64) ou Intel (x86_64)
+- Ferramentas de linha de comando (`CommandLineTools` ou Xcode)
+
+---
+
+## 📦 Como Compilar e Executar
+
+### Compilação Rápida
+Execute o script de build incluído na raiz do projeto:
+
+```bash
+chmod +x build.sh
+./build.sh
+```
+
+O aplicativo empacotado estará disponível em `.build/VPlayer.app`.
+
+### Compilar e Iniciar Imediatamente
+```bash
+./build.sh run
+```
+
+---
+
+## ⌨️ Atalhos de Teclado
+
+| Atalho | Ação |
+|---|---|
+| `⌥ Espaço` | Tocar / Pausar |
+| `⌘ →` | Próxima Faixa |
+| `⌘ ←` | Faixa Anterior |
+| `⌘ ↑` / `⌘ ↓` | Aumentar / Diminuir Volume |
+| `⌘ O` | Abrir Arquivos de Áudio |
+| `⌘ L` | Exibir / Ocultar Fila (Playlist) |
+| `⇧ ⌘ P` | Exibir / Ocultar Painel Lateral (EQ / Efeitos / Letras) |
+| `⇧ ⌘ S` | Alternar Modo Aleatório (Shuffle) |
+| `⇧ ⌘ R` | Alternar Modo de Repetição |
+
+---
+
+## 📂 Arquitetura do Projeto
+
+```
+vplayer/
+├── build.sh                 # Script de compilação, empacotamento e assinatura ad-hoc
+├── Package.swift            # Manifesto Swift Package Manager
+└── Sources/
+    └── VPlayer/
+        ├── App/             # Ciclo de vida da aplicação SwiftUI e comandos de menu
+        │   ├── VPlayerApp.swift
+        │   ├── AppDelegate.swift
+        │   └── AppCommands.swift
+        ├── Models/          # Estruturas de dados (Track, Lyrics, Enums)
+        │   ├── Track.swift
+        │   ├── Lyrics.swift
+        │   └── Enums.swift
+        ├── Services/        # Motores de áudio, metadados e sistema
+        │   ├── AudioEngineService.swift
+        │   ├── MetadataService.swift
+        │   ├── LyricsService.swift
+        │   └── NowPlayingService.swift
+        ├── ViewModels/      # Lógica de controle e estado observável
+        │   └── PlayerViewModel.swift
+        └── Views/           # Interfaces em SwiftUI
+            ├── ContentView.swift
+            ├── PlaylistView.swift
+            ├── NowPlayingView.swift
+            ├── PlayerBarView.swift
+            ├── ArtworkView.swift
+            ├── EqualizerView.swift
+            ├── EffectsView.swift
+            ├── LyricsView.swift
+            └── FilePicker.swift
+```
+
+---
+
+## 📄 Licença
+
+Este projeto é distribuído sob a licença **MIT**. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+

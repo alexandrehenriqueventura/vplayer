@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Build and Application
+.build/
+*.app/
+*.dSYM/
+
+# Xcode & SwiftPM
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+.swiftpm/
+
+# Temporary / Scratch
+*.tmp
+*.log
