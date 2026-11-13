@@ -4,6 +4,29 @@ VPlayer é um player de áudio nativo moderno, rápido e elegante para macOS, de
 
 ---
 
+## 📸 Capturas de Tela
+
+### 1. Interface Principal & Fila de Reprodução
+Visual limpo com acabamento em *glassmorphism*, capa do álbum em destaque com animação acústica, barra de controle inferior e painel lateral de fila retrátil com busca em tempo real.
+
+![Interface Principal & Fila](docs/screenshots/now-playing-queue.png)
+
+---
+
+### 2. Equalizador Gráfico de 10 Bandas
+Equalizador de precisão abrangendo de 32 Hz a 16 kHz com ganho de -12 dB a +12 dB, curvas de frequência, presets musicais de fábrica (Rock, Pop, Jazz, etc.) e controles deslizantes em gradiente.
+
+![Equalizador Gráfico](docs/screenshots/equalizer-10band.png)
+
+---
+
+### 3. Painel de Efeitos de Áudio em Tempo Real
+Controle dinâmico sobre o processamento de som via AVAudioEngine: ajuste de velocidade de reprodução (0.5x – 2.0x), transposição tonal (*pitch* em semitons), reverb estéreo com emulação de ambientes acústicos e crossfade configurável entre faixas.
+
+![Painel de Efeitos de Áudio](docs/screenshots/audio-effects.png)
+
+---
+
 ## 🚀 Funcionalidades
 
 - **Gerenciamento de Fila & Playlist**:
@@ -78,6 +101,9 @@ O aplicativo empacotado estará disponível em `.build/VPlayer.app`.
 vplayer/
 ├── build.sh                 # Script de compilação, empacotamento e assinatura ad-hoc
 ├── Package.swift            # Manifesto Swift Package Manager
+├── docs/                    # Documentação e capturas de tela do aplicativo
+│   └── screenshots/
+├── Resources/               # Ícones (.icns, .png) do aplicativo
 └── Sources/
     └── VPlayer/
         ├── App/             # Ciclo de vida da aplicação SwiftUI e comandos de menu
