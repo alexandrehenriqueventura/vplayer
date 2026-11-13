@@ -55,6 +55,7 @@ struct ContentView: View {
                 }
                 .foregroundStyle(player.showPlaylist ? Color.accentColor : Color.secondary)
                 .help(player.showPlaylist ? "Ocultar Fila (⌘L)" : "Exibir Fila (⌘L)")
+                .accessibilityLabel(player.showPlaylist ? "Ocultar fila de reprodução" : "Exibir fila de reprodução")
             }
 
             ToolbarItemGroup {
@@ -63,7 +64,8 @@ struct ContentView: View {
                 } label: {
                     Label("Adicionar", systemImage: "plus")
                 }
-                .help("Adicionar arquivos de áudio (⌘O)")
+                .help("Adicionar arquivos ou pastas de áudio (⌘O)")
+                .accessibilityLabel("Adicionar arquivos ou pastas de áudio")
 
                 Menu {
                     Button("Abrir playlist…") {
@@ -106,6 +108,7 @@ struct ContentView: View {
                 }
                 .foregroundStyle(player.showConsole ? Color.accentColor : Color.secondary)
                 .help(player.showConsole ? "Ocultar Painel Lateral (⇧⌘P)" : "Exibir Painel Lateral (⇧⌘P)")
+                .accessibilityLabel(player.showConsole ? "Ocultar painel lateral" : "Exibir painel lateral")
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .vplayerOpenFiles)) { _ in

@@ -38,13 +38,17 @@ Controle dinâmico sobre o processamento de som via AVAudioEngine: ajuste de vel
 
 - **Gerenciamento de Fila & Playlist**:
   - Exibir ou ocultar a fila/playlist com um clique (`sidebar.leading` ou ⌘L).
-  - Adição de arquivos e diretórios de áudio via File Picker ou Drag & Drop.
+  - Varredura recursiva de pastas e importação múltipla de arquivos via File Picker ou Drag & Drop (com deduplicação automática).
+  - Persistência automática de sessão (fila e faixa selecionada restauradas ao reabrir o app).
   - Ordenação, remoção, busca/filtro em tempo real.
   - Modos de reprodução: Normal, Repetir Uma, Repetir Todas e Shuffle (aleatório inteligente).
 - **Equalizador Gráfico de 10 Bandas**:
-  - Bandas de 31Hz a 16kHz com controles deslizantes interativos de -12dB a +12dB.
+  - Curva visual de resposta de frequência em tempo real com interpolação suave.
+  - Bandas de 32Hz a 16kHz com controles deslizantes interativos de -12dB a +12dB.
   - Presets de fábrica integrados (Flat, Rock, Pop, Jazz, Clássica, Bass Boost, Vocal, Eletrônica).
   - Suporte a presets customizados salvos pelo usuário.
+- **Acessibilidade**:
+  - Suporte completo ao **VoiceOver** com rótulos descritivos, valores dinâmicos e controle ajustável por teclado nos sliders do equalizador.
 - **Efeitos de Áudio em Tempo Real**:
   - Ajuste de Pitch (semitons) e Velocidade de Reprodução (0.5x a 2.0x).
   - Reverb com múltiplos modos (Small Room, Medium Room, Large Room, Plate, Cathedral).
@@ -98,6 +102,12 @@ O aplicativo empacotado estará disponível em `.build/VPlayer.app`.
 ### Compilar e Iniciar Imediatamente
 ```bash
 ./build.sh run
+```
+
+### Executar Testes Unitários
+```bash
+chmod +x test.sh
+./test.sh
 ```
 
 ---

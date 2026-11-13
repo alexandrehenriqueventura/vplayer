@@ -6,9 +6,10 @@ enum FilePicker {
     @MainActor
     static func openAudio(player: PlayerViewModel) {
         let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.audio]
+        panel.allowedContentTypes = [.audio, .folder]
         panel.allowsMultipleSelection = true
-        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = true
         panel.resolvesAliases = true
         panel.prompt = "Adicionar"
         if panel.runModal() == .OK {

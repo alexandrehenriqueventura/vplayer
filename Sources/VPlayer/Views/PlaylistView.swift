@@ -23,7 +23,7 @@ struct PlaylistView: View {
                     ContentUnavailableView(
                         "Nenhuma faixa",
                         systemImage: "music.note.list",
-                        description: Text("Arraste arquivos aqui ou use ⌘O para adicionar.")
+                        description: Text("Arraste arquivos ou pastas aqui ou use ⌘O para adicionar.")
                     )
                 } else if player.filteredTracks.isEmpty {
                     ContentUnavailableView.search(text: player.searchText)
@@ -51,7 +51,8 @@ struct PlaylistView: View {
                     Image(systemName: "plus")
                 }
                 .buttonStyle(.borderless)
-                .help("Adicionar arquivos")
+                .help("Adicionar arquivos ou pastas")
+                .accessibilityLabel("Adicionar arquivos ou pastas à fila")
             }
 
             HStack(spacing: 6) {

@@ -35,6 +35,8 @@ struct PlayerBarView: View {
                     }
                 )
                 .disabled(player.currentTrack == nil)
+                .accessibilityLabel("Posição da reprodução")
+                .accessibilityValue("\(PlaylistView.format(duration: player.isSeeking ? scrubValue : player.currentTime)) de \(PlaylistView.format(duration: player.duration))")
 
                 Text(PlaylistView.format(duration: player.duration))
                     .font(.caption.monospacedDigit())
@@ -57,6 +59,8 @@ struct PlayerBarView: View {
                     .buttonStyle(.borderless)
                     .foregroundStyle(player.shuffle ? Color.accentColor : Color.secondary)
                     .help("Aleatório (⇧⌘S)")
+                    .accessibilityLabel("Modo aleatório")
+                    .accessibilityValue(player.shuffle ? "Ativado" : "Desativado")
 
                     Button {
                         player.playPrevious()
@@ -66,6 +70,7 @@ struct PlayerBarView: View {
                     .buttonStyle(.borderless)
                     .font(.title3)
                     .disabled(player.currentTrack == nil)
+                    .accessibilityLabel("Faixa anterior")
 
                     Button {
                         player.togglePlay()
@@ -75,6 +80,7 @@ struct PlayerBarView: View {
                     }
                     .buttonStyle(.borderless)
                     .disabled(player.currentTrack == nil)
+                    .accessibilityLabel(player.isPlaying ? "Pausar" : "Reproduzir")
 
                     Button {
                         player.playNext()
@@ -84,6 +90,7 @@ struct PlayerBarView: View {
                     .buttonStyle(.borderless)
                     .font(.title3)
                     .disabled(player.currentTrack == nil)
+                    .accessibilityLabel("Próxima faixa")
 
                     Button {
                         player.cycleRepeatMode()
@@ -100,6 +107,8 @@ struct PlayerBarView: View {
                     .buttonStyle(.borderless)
                     .foregroundStyle(player.repeatMode == .off ? Color.secondary : Color.accentColor)
                     .help(player.repeatMode.title)
+                    .accessibilityLabel("Modo de repetição")
+                    .accessibilityValue(player.repeatMode.title)
                 }
 
                 Spacer()
@@ -115,6 +124,7 @@ struct PlayerBarView: View {
                     .buttonStyle(.borderless)
                     .foregroundStyle(player.showPlaylist ? Color.accentColor : Color.secondary)
                     .help(player.showPlaylist ? "Ocultar Fila (⌘L)" : "Exibir Fila (⌘L)")
+                    .accessibilityLabel(player.showPlaylist ? "Ocultar fila de reprodução" : "Exibir fila de reprodução")
 
                     Button {
                         player.toggleMute()
@@ -123,6 +133,7 @@ struct PlayerBarView: View {
                     }
                     .buttonStyle(.borderless)
                     .help("Silenciar")
+                    .accessibilityLabel(player.isMuted ? "Ativar som" : "Silenciar")
 
                     Slider(
                         value: Binding(
@@ -132,6 +143,8 @@ struct PlayerBarView: View {
                         in: 0...1
                     )
                     .frame(width: 100)
+                    .accessibilityLabel("Volume")
+                    .accessibilityValue("\(Int((player.isMuted ? 0 : player.volume) * 100)) por cento")
                 }
                 .frame(width: 200, alignment: .trailing)
             }

@@ -68,6 +68,7 @@ final class PlayerViewModel: ObservableObject {
 
     let audio = AudioEngineService()
     private let nowPlaying = NowPlayingService()
+    private let persistence: PlaylistPersistenceService
     private var timer: AnyCancellable?
     private var cancellables = Set<AnyCancellable>()
     private var crossfadedInto: UUID?
@@ -94,7 +95,8 @@ final class PlayerViewModel: ObservableObject {
         return min(max(currentTime / duration, 0), 1)
     }
 
-    init() {
+    init(persistence: PlaylistPersistenceService = PlaylistPersistenceService()) {
+        self.persistence = persistence
         let defaults = UserDefaults.standard
         volume = defaults.object(forKey: Keys.volume) as? Double ?? 0.8
         shuffle = defaults.bool(forKey: Keys.shuffle)
@@ -131,6 +133,7 @@ final class PlayerViewModel: ObservableObject {
 
         registerShortcuts()
         startTimer()
+        restoreSession()
     }
 
     deinit {
@@ -227,10 +230,20 @@ final class PlayerViewModel: ObservableObject {
     }
 
     func addFiles(urls: [URL]) {
-        guard !urls.isEmpty else { return }
+        let expanded = LibraryScanner.expand(urls: urls)
+        let existingURLs = Set(tracks.map { $0.url.standardizedFileURL })
+        let newURLs = expanded.filter { !existingURLs.contains($0.standardizedFileURL) }
+
+        guard !newURLs.isEmpty else {
+            if !expanded.isEmpty {
+                statusMessage = "As faixas selecionadas já estão na fila."
+            }
+            return
+        }
+
         isLoading = true
-        pendingMetadataCount = urls.count
-        for url in urls {
+        pendingMetadataCount += newURLs.count
+        for url in newURLs {
             let track = Track(url: url)
             tracks.append(track)
             metadataTasks[track.id] = Task { [weak self] in
@@ -248,11 +261,47 @@ final class PlayerViewModel: ObservableObject {
                 }
                 self.pendingMetadataCount -= 1
                 if self.pendingMetadataCount <= 0 {
+                    self.pendingMetadataCount = 0
                     self.isLoading = false
+                    self.saveSession()
                 }
             }
         }
-        statusMessage = "\(urls.count) arquivo(s) adicionado(s)"
+        saveSession()
+        statusMessage = "\(newURLs.count) arquivo(s) adicionado(s)"
+    }
+
+    private func saveSession() {
+        persistence.save(tracks: tracks, currentIndex: currentIndex)
+    }
+
+    private func restoreSession() {
+        let session = persistence.load()
+        guard !session.tracks.isEmpty else { return }
+        tracks = session.tracks
+        currentIndex = session.currentIndex
+
+        if let currentTrack {
+            duration = currentTrack.duration
+            lyrics = LyricsService.load(for: currentTrack)
+        }
+
+        // Reload artwork and metadata asynchronously for restored tracks
+        for track in tracks {
+            let trackID = track.id
+            let trackURL = track.url
+            metadataTasks[trackID] = Task { [weak self] in
+                guard let self else { return }
+                if let loaded = try? await MetadataService.load(for: trackURL),
+                   let idx = self.tracks.firstIndex(where: { $0.id == trackID }) {
+                    self.tracks[idx] = loaded
+                    if self.currentIndex == idx {
+                        if self.duration <= 0 { self.duration = loaded.duration }
+                        if self.lyrics.isEmpty { self.lyrics = LyricsService.load(for: loaded) }
+                    }
+                }
+            }
+        }
     }
 
     func removeTracks(at offsets: IndexSet) {
@@ -265,6 +314,7 @@ final class PlayerViewModel: ObservableObject {
         } else if let currentID, let newIndex = tracks.firstIndex(where: { $0.id == currentID }) {
             currentIndex = newIndex
         }
+        saveSession()
     }
 
     func removeTrack(_ track: Track) {
@@ -277,11 +327,13 @@ final class PlayerViewModel: ObservableObject {
         tracks.removeAll()
         currentIndex = nil
         lyrics = []
+        saveSession()
     }
 
     func moveTracks(from source: IndexSet, to destination: Int) {
         tracks.move(fromOffsets: source, toOffset: destination)
         refreshCurrentIndex()
+        saveSession()
     }
 
     private func refreshCurrentIndex() {
@@ -311,6 +363,7 @@ final class PlayerViewModel: ObservableObject {
             audio.play(trackID: track.id, file: file)
             isPlaying = true
             updateNowPlaying()
+            saveSession()
         } catch {
             errorMessage = error.localizedDescription
             isPlaying = false
@@ -413,6 +466,7 @@ final class PlayerViewModel: ObservableObject {
         audio.crossfade(to: nextTrack.id, file: file, duration: crossfade)
         isPlaying = true
         updateNowPlaying()
+        saveSession()
     }
 
     private func handleTrackEnded(_ id: UUID) {
