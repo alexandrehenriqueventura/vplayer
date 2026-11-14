@@ -120,7 +120,7 @@ chmod +x test.sh
 | `⌘ →` | Próxima Faixa |
 | `⌘ ←` | Faixa Anterior |
 | `⌘ ↑` / `⌘ ↓` | Aumentar / Diminuir Volume |
-| `⌘ O` | Abrir Arquivos de Áudio |
+| `⌘ O` | Abrir Arquivos ou Pastas de Áudio |
 | `⌘ L` | Exibir / Ocultar Fila (Playlist) |
 | `⇧ ⌘ P` | Exibir / Ocultar Painel Lateral (EQ / Efeitos / Letras) |
 | `⇧ ⌘ S` | Alternar Modo Aleatório (Shuffle) |
@@ -133,6 +133,7 @@ chmod +x test.sh
 ```
 vplayer/
 ├── build.sh                 # Script de compilação, empacotamento e assinatura ad-hoc
+├── test.sh                  # Script de execução da suíte de testes unitários
 ├── Package.swift            # Manifesto Swift Package Manager
 ├── bin/                     # Executável compilado nativo (Mach-O)
 │   └── VPlayer
@@ -141,6 +142,9 @@ vplayer/
 ├── docs/                    # Documentação e capturas de tela do aplicativo
 │   └── screenshots/
 ├── Resources/               # Ícones (.icns, .png) do aplicativo
+├── Tests/
+│   └── VPlayerTests/
+│       └── VPlayerTests.swift
 └── Sources/
     └── VPlayer/
         ├── App/             # Ciclo de vida da aplicação SwiftUI e comandos de menu
@@ -151,15 +155,18 @@ vplayer/
         │   ├── Track.swift
         │   ├── Lyrics.swift
         │   └── Enums.swift
-        ├── Services/        # Motores de áudio, metadados e sistema
+        ├── Services/        # Motores de áudio, metadados, persistência e varredura
         │   ├── AudioEngineService.swift
         │   ├── MetadataService.swift
         │   ├── LyricsService.swift
-        │   └── NowPlayingService.swift
+        │   ├── NowPlayingService.swift
+        │   ├── LibraryScanner.swift
+        │   └── PlaylistPersistenceService.swift
         ├── ViewModels/      # Lógica de controle e estado observável
         │   └── PlayerViewModel.swift
         └── Views/           # Interfaces em SwiftUI
             ├── ContentView.swift
+            ├── ConsoleView.swift
             ├── PlaylistView.swift
             ├── NowPlayingView.swift
             ├── PlayerBarView.swift
