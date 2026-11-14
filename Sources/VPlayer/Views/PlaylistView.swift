@@ -46,6 +46,16 @@ struct PlaylistView: View {
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
                 Button {
+                    player.clearPlaylist()
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
+                .disabled(player.tracks.isEmpty)
+                .help("Limpar lista de reprodução")
+                .accessibilityLabel("Limpar lista de reprodução")
+                Button {
                     FilePicker.openAudio(player: player)
                 } label: {
                     Image(systemName: "plus")

@@ -83,21 +83,26 @@ struct ContentView: View {
                     Label("Playlist", systemImage: "list.bullet")
                 }
 
-                Picker("Painel", selection: Binding(
-                    get: { consoleTab },
-                    set: { newTab in
-                        consoleTab = newTab
-                        if !player.showConsole {
-                            withAnimation { player.showConsole = true }
-                        }
-                    }
-                )) {
+                ControlGroup {
                     ForEach(ConsoleTab.allCases) { tab in
-                        Label(tab.title, systemImage: tab.symbol).tag(tab)
+                        let isSelected = player.showConsole && consoleTab == tab
+                        Button {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                if player.showConsole && consoleTab == tab {
+                                    player.showConsole = false
+                                } else {
+                                    consoleTab = tab
+                                    player.showConsole = true
+                                }
+                            }
+                        } label: {
+                            Image(systemName: tab.symbol)
+                                .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
+                        }
+                        .help(isSelected ? "Ocultar \(tab.title)" : "Exibir \(tab.title)")
+                        .accessibilityLabel(isSelected ? "Ocultar \(tab.title)" : "Exibir \(tab.title)")
                     }
                 }
-                .pickerStyle(.segmented)
-                .frame(maxWidth: 300)
 
                 Button {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
