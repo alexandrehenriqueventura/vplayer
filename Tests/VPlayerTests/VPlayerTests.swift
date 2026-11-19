@@ -137,6 +137,43 @@ func testPlaylistPersistence() throws {
     checkEqual(loaded.currentIndex, 1, "Deve recalcular currentIndex após filtrar faixa ausente")
 }
 
+// MARK: - MusicLibraryService Tests
+
+func testMusicLibraryAlbumGroupingAndFolderArt() throws {
+    let fm = FileManager.default
+    let root = fm.temporaryDirectory.appendingPathComponent("VPlayerLibraryTest-\(UUID().uuidString)", isDirectory: true)
+    let albumADir = root.appendingPathComponent("Portals", isDirectory: true)
+    let albumBDir = root.appendingPathComponent("UntaggedLive", isDirectory: true)
+    try fm.createDirectory(at: albumADir, withIntermediateDirectories: true)
+    try fm.createDirectory(at: albumBDir, withIntermediateDirectories: true)
+    defer { try? fm.removeItem(at: root) }
+
+    let coverData = Data([0xFF, 0xD8, 0xFF, 0xE0])
+    try coverData.write(to: albumBDir.appendingPathComponent("cover.jpg"))
+
+    let t1 = Track(url: albumADir.appendingPathComponent("02 Tourniquet.mp3"), title: "Tourniquet", artist: "TesseracT", album: "Portals", duration: 278)
+    let t2 = Track(url: albumADir.appendingPathComponent("01 Of Matter.mp3"), title: "Of Matter", artist: "TesseracT", album: "Portals", duration: 310)
+    let t3 = Track(url: albumBDir.appendingPathComponent("01 Jam.flac"), title: "Jam", artist: "Artista desconhecido", album: "Álbum desconhecido", duration: 180)
+
+    let albums = MusicLibraryService.groupIntoAlbums(tracks: [t1, t2, t3], rootDirectory: root)
+    checkEqual(albums.count, 2, "Deve agrupar em 2 álbuns distintos")
+
+    if let portals = albums.first(where: { $0.title == "Portals" }) {
+        checkEqual(portals.artist, "TesseracT", "Artista do álbum Portals deve ser TesseracT")
+        checkEqual(portals.tracks.count, 2, "Álbum Portals deve conter 2 faixas")
+        checkEqual(portals.tracks.first?.title, "Of Matter", "Faixas devem ser ordenadas naturalmente (01 antes de 02)")
+    } else {
+        check(false, "Álbum Portals deve existir")
+    }
+
+    if let untagged = albums.first(where: { $0.title == "UntaggedLive" }) {
+        checkEqual(untagged.artworkData, coverData, "Deve detectar cover.jpg da pasta quando não houver arte embutida")
+        checkEqual(untagged.tracks.first?.artworkData, coverData, "Deve propagar arte da pasta para as faixas")
+    } else {
+        check(false, "Álbum sem tag deve usar o nome da pasta UntaggedLive")
+    }
+}
+
 // MARK: - Main Entry
 
 @main
@@ -147,6 +184,7 @@ struct VPlayerTestsRunner {
         testEqualizerModels()
         try testLibraryScannerRecursiveExpansion()
         try testPlaylistPersistence()
+        try testMusicLibraryAlbumGroupingAndFolderArt()
 
         print("✅ Passaram: \(passedTests) | ❌ Falharam: \(failedTests)")
         if failedTests > 0 {

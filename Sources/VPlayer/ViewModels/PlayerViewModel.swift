@@ -346,6 +346,33 @@ final class PlayerViewModel: ObservableObject {
         play(index: index)
     }
 
+    func playAlbum(_ album: Album, shuffled: Bool = false, startingAt index: Int = 0) {
+        guard !album.tracks.isEmpty else { return }
+        stop()
+        tracks = album.tracks
+        shuffle = shuffled
+        let safeIndex: Int
+        if shuffled {
+            safeIndex = Int.random(in: 0..<tracks.count)
+        } else {
+            safeIndex = tracks.indices.contains(index) ? index : 0
+        }
+        play(index: safeIndex)
+        statusMessage = "Tocando álbum \(album.title)"
+    }
+
+    func enqueueAlbum(_ album: Album) {
+        let existingURLs = Set(tracks.map { $0.url.standardizedFileURL })
+        let newTracks = album.tracks.filter { !existingURLs.contains($0.url.standardizedFileURL) }
+        guard !newTracks.isEmpty else {
+            statusMessage = "As faixas de \(album.title) já estão na fila."
+            return
+        }
+        tracks.append(contentsOf: newTracks)
+        saveSession()
+        statusMessage = "\(newTracks.count) faixa(s) de \(album.title) adicionada(s) à fila"
+    }
+
     func play(index: Int) {
         guard tracks.indices.contains(index) else { return }
         currentIndex = index

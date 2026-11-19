@@ -36,6 +36,10 @@ Controle dinâmico sobre o processamento de som via AVAudioEngine: ajuste de vel
 
 ## 🚀 Funcionalidades
 
+- **Biblioteca de Álbuns (Tela Inicial)**:
+  - Varredura automática e assíncrona da pasta `~/Music` (ou pasta personalizada) ao abrir o aplicativo.
+  - Grade visual responsiva com capas embutidas, detecção automática de capas na pasta (`cover.jpg`, `folder.jpg`, etc.) e fallback em *glassmorphism*.
+  - Busca instantânea por álbum, artista ou faixa, ordenação (`Álbum A–Z`, `Artista A–Z`, `Mais Recentes`), reprodução com 1 clique no card e tela de detalhes do álbum com lista de faixas.
 - **Gerenciamento de Fila & Playlist**:
   - Exibir ou ocultar a fila/playlist com um clique (`sidebar.leading` ou ⌘L).
   - Varredura recursiva de pastas e importação múltipla de arquivos via File Picker ou Drag & Drop (com deduplicação automática).
@@ -151,8 +155,9 @@ vplayer/
         │   ├── VPlayerApp.swift
         │   ├── AppDelegate.swift
         │   └── AppCommands.swift
-        ├── Models/          # Estruturas de dados (Track, Lyrics, Enums)
+        ├── Models/          # Estruturas de dados (Track, Album, Lyrics, Enums)
         │   ├── Track.swift
+        │   ├── Album.swift
         │   ├── Lyrics.swift
         │   └── Enums.swift
         ├── Services/        # Motores de áudio, metadados, persistência e varredura
@@ -161,11 +166,14 @@ vplayer/
         │   ├── LyricsService.swift
         │   ├── NowPlayingService.swift
         │   ├── LibraryScanner.swift
+        │   ├── MusicLibraryService.swift
         │   └── PlaylistPersistenceService.swift
         ├── ViewModels/      # Lógica de controle e estado observável
-        │   └── PlayerViewModel.swift
+        │   ├── PlayerViewModel.swift
+        │   └── LibraryViewModel.swift
         └── Views/           # Interfaces em SwiftUI
             ├── ContentView.swift
+            ├── LibraryView.swift
             ├── ConsoleView.swift
             ├── PlaylistView.swift
             ├── NowPlayingView.swift

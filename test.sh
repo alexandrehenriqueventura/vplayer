@@ -25,9 +25,12 @@ swiftc \
     Sources/VPlayer/Models/Track.swift \
     Sources/VPlayer/Models/Lyrics.swift \
     Sources/VPlayer/Models/Enums.swift \
+    Sources/VPlayer/Models/Album.swift \
     Sources/VPlayer/Services/LyricsService.swift \
+    Sources/VPlayer/Services/MetadataService.swift \
     Sources/VPlayer/Services/LibraryScanner.swift \
     Sources/VPlayer/Services/PlaylistPersistenceService.swift \
+    Sources/VPlayer/Services/MusicLibraryService.swift \
     Tests/VPlayerTests/VPlayerTests.swift
 
 "${TEST_BIN}"

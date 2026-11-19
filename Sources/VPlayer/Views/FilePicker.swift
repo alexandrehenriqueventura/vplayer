@@ -40,4 +40,18 @@ enum FilePicker {
             player.exportPlaylist(to: url)
         }
     }
+
+    @MainActor
+    static func chooseLibraryFolder(library: LibraryViewModel) {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.directoryURL = library.libraryDirectory
+        panel.prompt = "Selecionar Pasta"
+        panel.message = "Escolha a pasta principal da sua biblioteca de músicas."
+        if panel.runModal() == .OK, let url = panel.url {
+            library.setLibraryDirectory(url)
+        }
+    }
 }
