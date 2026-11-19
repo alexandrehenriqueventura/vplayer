@@ -44,11 +44,11 @@ enum MusicLibraryService {
         rootDirectory: URL? = nil,
         fileManager: FileManager = .default
     ) -> [Album] {
-        let normalizedRoot = rootDirectory?.standardizedFileURL.path
-        var grouped: [String: (title: String, folder: URL, tracks: [Track])] = [:]
+        let normalizedRoot = rootDirectory?.resolvingSymlinksInPath().standardizedFileURL.path
+        var grouped: [String: (title: String, folders: [URL], tracks: [Track])] = [:]
 
         for track in tracks {
-            let folder = track.url.deletingLastPathComponent().standardizedFileURL
+            let folder = track.url.deletingLastPathComponent().resolvingSymlinksInPath().standardizedFileURL
             let rawAlbum = track.album.trimmingCharacters(in: .whitespacesAndNewlines)
             let isUnknownAlbum = rawAlbum.isEmpty || rawAlbum == "Álbum desconhecido"
 
@@ -56,7 +56,10 @@ enum MusicLibraryService {
             let groupKey: String
             if !isUnknownAlbum {
                 resolvedTitle = rawAlbum
-                groupKey = "tag:\(rawAlbum.lowercased())|\(folder.path.lowercased())"
+                let artistKey = primaryArtistKey(for: track.artist)
+                groupKey = artistKey.isEmpty
+                    ? "tag:\(rawAlbum.lowercased())"
+                    : "tag:\(rawAlbum.lowercased())|\(artistKey)"
             } else if let normalizedRoot, folder.path == normalizedRoot {
                 resolvedTitle = "Músicas Avulsas"
                 groupKey = "singles:\(folder.path.lowercased())"
@@ -67,9 +70,12 @@ enum MusicLibraryService {
 
             if var bucket = grouped[groupKey] {
                 bucket.tracks.append(track)
+                if !bucket.folders.contains(folder) {
+                    bucket.folders.append(folder)
+                }
                 grouped[groupKey] = bucket
             } else {
-                grouped[groupKey] = (title: resolvedTitle, folder: folder, tracks: [track])
+                grouped[groupKey] = (title: resolvedTitle, folders: [folder], tracks: [track])
             }
         }
 
@@ -77,13 +83,16 @@ enum MusicLibraryService {
         albums.reserveCapacity(grouped.count)
 
         for (key, bucket) in grouped {
-            let sortedTracks = bucket.tracks.sorted {
+            let deduplicatedTracks = deduplicateTracks(bucket.tracks)
+            let sortedTracks = deduplicatedTracks.sorted {
                 $0.url.lastPathComponent.localizedStandardCompare($1.url.lastPathComponent) == .orderedAscending
             }
 
             let artist = resolveAlbumArtist(for: sortedTracks)
             let embeddedArt = sortedTracks.first(where: { $0.artworkData != nil })?.artworkData
-            let folderArt = embeddedArt ?? findFolderArtwork(in: bucket.folder, fileManager: fileManager)
+            let folderArt = embeddedArt ?? bucket.folders.lazy.compactMap {
+                findFolderArtwork(in: $0, fileManager: fileManager)
+            }.first
 
             let latestDate = sortedTracks.compactMap { track -> Date? in
                 (try? track.url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate)
@@ -108,7 +117,7 @@ enum MusicLibraryService {
                     id: key,
                     title: bucket.title,
                     artist: artist,
-                    folderURL: bucket.folder,
+                    folderURL: bucket.folders.first ?? sortedTracks[0].url.deletingLastPathComponent(),
                     tracks: enrichedTracks,
                     artworkData: folderArt,
                     latestModified: latestDate
@@ -119,6 +128,58 @@ enum MusicLibraryService {
         return albums.sorted {
             $0.title.localizedStandardCompare($1.title) == .orderedAscending
         }
+    }
+
+    private static func primaryArtistKey(for rawArtist: String) -> String {
+        let trimmed = rawArtist.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if trimmed.isEmpty || trimmed == "artista desconhecido" || trimmed == "vários artistas" || trimmed == "various artists" {
+            return ""
+        }
+        // Strip featured artist suffixes so "Artist feat. Guest" stays with "Artist"
+        for separator in [" feat. ", " ft. ", " featuring ", " & "] {
+            if let range = trimmed.range(of: separator) {
+                let base = String(trimmed[..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
+                if !base.isEmpty { return base }
+            }
+        }
+        return trimmed
+    }
+
+    private static func deduplicateTracks(_ tracks: [Track]) -> [Track] {
+        var result: [Track] = []
+        result.reserveCapacity(tracks.count)
+
+        for track in tracks {
+            let titleKey = track.title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            let stemKey = track.url.deletingPathExtension().lastPathComponent.lowercased()
+
+            if let existingIndex = result.firstIndex(where: { existing in
+                let existingTitle = existing.title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                let existingStem = existing.url.deletingPathExtension().lastPathComponent.lowercased()
+                let sameIdentity = existingTitle == titleKey && existingStem == stemKey
+                let similarDuration = abs(existing.duration - track.duration) <= 2.0
+                return sameIdentity && similarDuration
+            }) {
+                if trackScore(track) > trackScore(result[existingIndex]) {
+                    result[existingIndex] = track
+                }
+            } else {
+                result.append(track)
+            }
+        }
+
+        return result
+    }
+
+    private static func trackScore(_ track: Track) -> Int {
+        var score = track.artworkData != nil ? 100 : 0
+        switch track.url.pathExtension.lowercased() {
+        case "flac", "alac", "wav", "aiff", "aif": score += 30
+        case "m4a", "aac": score += 20
+        case "mp3": score += 10
+        default: break
+        }
+        return score
     }
 
     static func scan(directory: URL, maxConcurrency: Int = 8) async -> [Album] {

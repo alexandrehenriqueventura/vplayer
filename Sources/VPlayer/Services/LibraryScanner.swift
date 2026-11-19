@@ -11,7 +11,7 @@ enum LibraryScanner {
         var seen: Set<URL> = []
 
         for url in urls {
-            let standardized = url.standardizedFileURL
+            let standardized = url.resolvingSymlinksInPath().standardizedFileURL
             let isDirectory = (try? standardized.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
 
             if isDirectory {
@@ -23,9 +23,10 @@ enum LibraryScanner {
 
                 var discovered: [URL] = []
                 for case let itemURL as URL in enumerator {
-                    let isFile = (try? itemURL.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) ?? false
-                    guard isFile, isSupportedAudio(itemURL) else { continue }
-                    discovered.append(itemURL.standardizedFileURL)
+                    let resolvedItem = itemURL.resolvingSymlinksInPath().standardizedFileURL
+                    let isFile = (try? resolvedItem.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) ?? false
+                    guard isFile, isSupportedAudio(resolvedItem) else { continue }
+                    discovered.append(resolvedItem)
                 }
 
                 discovered.sort {

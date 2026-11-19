@@ -174,6 +174,44 @@ func testMusicLibraryAlbumGroupingAndFolderArt() throws {
     }
 }
 
+func testMusicLibraryDeduplicationAndMultiDiscMerge() throws {
+    let fm = FileManager.default
+    let root = fm.temporaryDirectory.appendingPathComponent("VPlayerDedupeTest-\(UUID().uuidString)", isDirectory: true)
+    let cd1 = root.appendingPathComponent("Altered State/CD1", isDirectory: true)
+    let cd2 = root.appendingPathComponent("Altered State/CD2", isDirectory: true)
+    let backup = root.appendingPathComponent("Backup/Altered State", isDirectory: true)
+    let queenDir = root.appendingPathComponent("Queen", isDirectory: true)
+    let fooDir = root.appendingPathComponent("Foo Fighters", isDirectory: true)
+    try fm.createDirectory(at: cd1, withIntermediateDirectories: true)
+    try fm.createDirectory(at: cd2, withIntermediateDirectories: true)
+    try fm.createDirectory(at: backup, withIntermediateDirectories: true)
+    try fm.createDirectory(at: queenDir, withIntermediateDirectories: true)
+    try fm.createDirectory(at: fooDir, withIntermediateDirectories: true)
+    defer { try? fm.removeItem(at: root) }
+
+    let art = Data([0x89, 0x50, 0x4E, 0x47])
+    let tracks = [
+        // Same track in CD1 (no art, mp3) and Backup (with art, flac) -> should merge and keep flac+art
+        Track(url: cd1.appendingPathComponent("01 Proxy.mp3"), title: "Proxy", artist: "TesseracT", album: "Altered State", duration: 240, artworkData: nil),
+        Track(url: backup.appendingPathComponent("01 Proxy.flac"), title: "Proxy", artist: "TesseracT", album: "Altered State", duration: 240, artworkData: art),
+        // Different track in CD2 -> should merge into same Altered State album
+        Track(url: cd2.appendingPathComponent("02 Retrospect.mp3"), title: "Retrospect", artist: "TesseracT", album: "Altered State", duration: 310),
+        // Different artists with same album name -> must stay separate
+        Track(url: queenDir.appendingPathComponent("01 Bohemian.mp3"), title: "Bohemian", artist: "Queen", album: "Greatest Hits", duration: 355),
+        Track(url: fooDir.appendingPathComponent("01 Everlong.mp3"), title: "Everlong", artist: "Foo Fighters", album: "Greatest Hits", duration: 250)
+    ]
+
+    let albums = MusicLibraryService.groupIntoAlbums(tracks: tracks, rootDirectory: root)
+    checkEqual(albums.count, 3, "Deve resultar em 3 álbuns (1 Altered State unificado + 2 Greatest Hits distintos)")
+
+    if let altered = albums.first(where: { $0.title == "Altered State" }) {
+        checkEqual(altered.tracks.count, 2, "Altered State deve conter 2 faixas únicas após deduplicação")
+        checkEqual(altered.artworkData, art, "Deve preservar a arte do álbum mesclado")
+    } else {
+        check(false, "Álbum Altered State deve existir")
+    }
+}
+
 // MARK: - Main Entry
 
 @main
@@ -185,6 +223,7 @@ struct VPlayerTestsRunner {
         try testLibraryScannerRecursiveExpansion()
         try testPlaylistPersistence()
         try testMusicLibraryAlbumGroupingAndFolderArt()
+        try testMusicLibraryDeduplicationAndMultiDiscMerge()
 
         print("✅ Passaram: \(passedTests) | ❌ Falharam: \(failedTests)")
         if failedTests > 0 {
