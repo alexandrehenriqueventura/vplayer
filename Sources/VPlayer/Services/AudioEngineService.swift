@@ -8,6 +8,7 @@ final class AudioEngineService {
         var file: AVAudioFile
         var offset: TimeInterval
         var baseSample: AVAudioFramePosition
+        var scheduleID: UUID = UUID()
     }
 
     private let engine = AVAudioEngine()
@@ -176,7 +177,8 @@ final class AudioEngineService {
         let startFrame = AVAudioFramePosition(max(0, min(offset, duration(of: file) - 0.01)) * rate)
         let remaining = max(0, file.length - startFrame)
 
-        busStates[bus] = BusState(trackID: trackID, file: file, offset: Double(startFrame) / rate, baseSample: 0)
+        let scheduleID = UUID()
+        busStates[bus] = BusState(trackID: trackID, file: file, offset: Double(startFrame) / rate, baseSample: 0, scheduleID: scheduleID)
         activeBus = bus
         crossfadeTargetBus = nil
         setBusVolume(0, value: 1)
@@ -195,7 +197,9 @@ final class AudioEngineService {
             completionCallbackType: .dataPlayedBack
         ) { [weak self] _ in
             Task { @MainActor in
-                guard let self, self.activeBus == bus else { return }
+                guard let self,
+                      self.activeBus == bus,
+                      self.busStates[bus]?.scheduleID == scheduleID else { return }
                 self.onTrackEnded?(trackID)
             }
         }
@@ -217,7 +221,8 @@ final class AudioEngineService {
         let startFrame = AVAudioFramePosition(0)
         let remaining = file.length
 
-        busStates[newBus] = BusState(trackID: trackID, file: file, offset: 0, baseSample: 0)
+        let scheduleID = UUID()
+        busStates[newBus] = BusState(trackID: trackID, file: file, offset: 0, baseSample: 0, scheduleID: scheduleID)
         crossfadeTargetBus = newBus
         setBusVolume(newBus, value: fadeDuration > 0 ? 0 : 1)
 
@@ -229,7 +234,9 @@ final class AudioEngineService {
             completionCallbackType: .dataPlayedBack
         ) { [weak self] _ in
             Task { @MainActor in
-                guard let self, self.crossfadeTargetBus == newBus || self.activeBus == newBus else { return }
+                guard let self,
+                      self.crossfadeTargetBus == newBus || self.activeBus == newBus,
+                      self.busStates[newBus]?.scheduleID == scheduleID else { return }
                 self.onTrackEnded?(trackID)
             }
         }
@@ -308,15 +315,25 @@ final class AudioEngineService {
     }
 
     func seek(to seconds: TimeInterval) {
-        guard let bus = activeBus, let state = busStates[bus] else { return }
+        let bus = crossfadeTargetBus ?? activeBus
+        guard let bus, let state = busStates[bus] else { return }
         let node = player(for: bus)
         let wasPlaying = node.isPlaying
+        let trackDuration = duration(of: state.file)
+        let clampedSeconds = max(0, min(seconds, max(0, trackDuration - 0.02)))
         let rate = state.file.processingFormat.sampleRate
-        let startFrame = AVAudioFramePosition(max(0, seconds) * rate)
+        let startFrame = AVAudioFramePosition(clampedSeconds * rate)
         let remaining = max(0, state.file.length - startFrame)
 
+        let scheduleID = UUID()
+        busStates[bus] = BusState(
+            trackID: state.trackID,
+            file: state.file,
+            offset: clampedSeconds,
+            baseSample: 0,
+            scheduleID: scheduleID
+        )
         node.stop()
-        busStates[bus] = BusState(trackID: state.trackID, file: state.file, offset: seconds, baseSample: 0)
 
         guard remaining > 0 else {
             onTrackEnded?(state.trackID)
@@ -331,15 +348,18 @@ final class AudioEngineService {
             completionCallbackType: .dataPlayedBack
         ) { [weak self] _ in
             Task { @MainActor in
-                guard let self, self.activeBus == bus else { return }
+                guard let self,
+                      self.activeBus == bus || self.crossfadeTargetBus == bus,
+                      self.busStates[bus]?.scheduleID == scheduleID else { return }
                 self.onTrackEnded?(state.trackID)
             }
         }
 
         if wasPlaying {
+            pausedPosition = nil
             node.play()
         } else {
-            pausedPosition = seconds
+            pausedPosition = clampedSeconds
         }
     }
 
