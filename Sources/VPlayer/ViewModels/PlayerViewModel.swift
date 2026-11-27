@@ -398,7 +398,7 @@ final class PlayerViewModel: ObservableObject {
     }
 
     func play() {
-        guard currentIndex != nil else {
+        guard let currentIndex else {
             if !tracks.isEmpty {
                 play(index: 0)
             }
@@ -407,6 +407,9 @@ final class PlayerViewModel: ObservableObject {
         if isPlaying {
             audio.pause()
             isPlaying = false
+        } else if !audio.hasLoadedTrack {
+            play(index: currentIndex)
+            return
         } else {
             audio.resume()
             isPlaying = true

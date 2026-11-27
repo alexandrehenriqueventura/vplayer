@@ -36,6 +36,10 @@ final class AudioEngineService {
         playerA.isPlaying || playerB.isPlaying
     }
 
+    var hasLoadedTrack: Bool {
+        (crossfadeTargetBus ?? activeBus) != nil
+    }
+
     var currentTime: TimeInterval {
         if let pausedPosition {
             return pausedPosition
@@ -281,14 +285,12 @@ final class AudioEngineService {
         if pausedPosition == nil {
             pausedPosition = currentTime
         }
-        if let bus = activeBus {
-            busStates[bus]?.offset = pausedPosition ?? 0
-        }
         playerA.pause()
         playerB.pause()
     }
 
     func resume() {
+        let targetPosition = pausedPosition
         pausedPosition = nil
         do {
             try startEngine()
@@ -296,13 +298,12 @@ final class AudioEngineService {
             onError?("Não foi possível retomar o áudio: \(error.localizedDescription)")
             return
         }
-        guard let bus = activeBus else { return }
-        let node = player(for: bus)
-        if let renderTime = node.lastRenderTime,
-           let nodeTime = node.playerTime(forNodeTime: renderTime) {
-            busStates[bus]?.baseSample = nodeTime.sampleTime
+        guard let bus = crossfadeTargetBus ?? activeBus else { return }
+        if let targetPosition {
+            reschedule(bus: bus, at: targetPosition, autoPlay: true)
+        } else {
+            player(for: bus).play()
         }
-        node.play()
     }
 
     func stop() {
@@ -315,10 +316,14 @@ final class AudioEngineService {
     }
 
     func seek(to seconds: TimeInterval) {
-        let bus = crossfadeTargetBus ?? activeBus
-        guard let bus, let state = busStates[bus] else { return }
+        guard let bus = crossfadeTargetBus ?? activeBus else { return }
+        let wasPlaying = player(for: bus).isPlaying
+        reschedule(bus: bus, at: seconds, autoPlay: wasPlaying)
+    }
+
+    private func reschedule(bus: Int, at seconds: TimeInterval, autoPlay: Bool) {
+        guard let state = busStates[bus] else { return }
         let node = player(for: bus)
-        let wasPlaying = node.isPlaying
         let trackDuration = duration(of: state.file)
         let clampedSeconds = max(0, min(seconds, max(0, trackDuration - 0.02)))
         let rate = state.file.processingFormat.sampleRate
@@ -355,7 +360,7 @@ final class AudioEngineService {
             }
         }
 
-        if wasPlaying {
+        if autoPlay {
             pausedPosition = nil
             node.play()
         } else {
